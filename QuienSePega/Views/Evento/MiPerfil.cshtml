@@ -1,0 +1,202 @@
+﻿@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "MiPerfil";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (Request.IsAuthenticated)
+{
+    <div class="container">
+        <div class="row pull-right">
+            <button id="btnCrearEvento" type="button" class="btn btn-default pull-right" style="margin-right:10px">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                Crear Evento
+            </button>
+            <button id="btnVerEvento" type="button" class="btn btn-default pull-right" style="margin-right:10px">
+                <i class="fa fa-map-marker" aria-hidden="true"></i>
+                Ver Eventos
+            </button>
+            <button id="btnMiPerfil" type="button" class="btn btn-default pull-right">
+                <i class="fa fa-bars" aria-hidden="true"></i>
+                Mi Perfil
+            </button>
+        </div>
+        <div class="miPerfil">
+            <h3 class="text-white">Mi Perfil [@User.Identity.Name]</h3>
+        </div>
+
+        @if (ViewBag.EsCreador == true)
+        {
+            <p class="text-white">[Creador]</p>
+            <button id="btnEliminarEvento" type="button" class="btn btn-danger " style="margin-bottom:10px">
+                <i class="fa fa-times" aria-hidden="true"></i>
+                Eliminar Evento
+            </button>
+            <!--<p class="text-white">@ViewBag.lugarOrigen.Latitud</p>
+            <p class="text-white">@ViewBag.lugarOrigen.Longitud</p>
+            <p class="text-white">@ViewBag.lugarDestino.Latitud</p>
+            <p class="text-white">@ViewBag.lugarDestino.Longitud</p>-->
+        }
+        @if (ViewBag.EstaEnEvento == true)
+        {
+            <p class="text-white">
+                [Participante]
+            </p>
+            <button id="botonSalirEvento" type="button" class="btn btn-danger " style="margin-bottom:10px">
+                <i class="fa fa-times" aria-hidden="true"></i>
+                Salir Del Evento
+            </button>
+            <!--<p class="text-white">@ViewBag.lugarOrigen.Latitud</p>
+            <p class="text-white">@ViewBag.lugarOrigen.Longitud</p>
+            <p class="text-white">@ViewBag.lugarDestino.Latitud</p>
+            <p class="text-white">@ViewBag.lugarDestino.Longitud</p>-->
+        }
+
+        @if (ViewBag.EsCreador == true || ViewBag.EstaEnEvento == true)
+        {
+            <div class="row">
+                <div class="col-md-7" id="map"></div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="text-white" for="origen">Origen:</label>
+                        <input class="form-control" type="text" disabled id="origen" name="origen" value="@ViewBag.NombreOrigen" />
+                    </div>
+                    <div class="form-group">
+                        <label class="text-white" for="destino">Destino:</label>
+                        <input class="form-control" type="text" disabled id="destino" name="destino" value="@ViewBag.NombreDestino" />
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" id="IdEvento" value="@ViewBag.IdEvento" />
+            <input type="hidden" id="latitudOrigen" value="@ViewBag.latitudOrigen" />
+            <input type="hidden" id="longitudOrigen" value="@ViewBag.longitudOrigen" />
+            <input type="hidden" id="latitudDestino" value="@ViewBag.latitudDestino" />
+            <input type="hidden" id="longitudDestino" value="@ViewBag.longitudDestino" />
+        }
+    </div>
+
+
+    @Scripts.Render("~/bundles/jquery")
+
+    <script>
+        $(document).ready(function () {
+            $('#btnCrearEvento').click(function () {
+                window.location.href = "/Evento/Index";
+            });
+            $('#btnVerEvento').click(function () {
+                window.location.href = "/Evento/DetallesEvento";
+            });
+            $('#btnMiPerfil').click(function () {
+                window.location.href = "/Evento/MiPerfil";
+            });
+
+            $('#btnEliminarEvento').click(function () {
+                eliminarEvento();
+            });
+
+            $('#botonSalirEvento').click(function () {
+                SalirEvento();
+            });
+
+        });
+
+        function SalirEvento() {
+            $.ajax({
+                url: "/Evento/SalirEvento",
+                type: "GET",
+                contentType: "text",
+                async: false,
+                success: function (data, textStatus, xhr) {
+                    if (textStatus == "success") {
+                        alert("Operación realizada correctamente");
+                        window.location.href = "/Evento/MiPerfil";
+                    } else {
+                        console.log("Ha ocurrido un error al realizar la peticion.");
+                    }
+
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    var data = jqXHR.responseJSON;
+                    console.log("Internal system error");
+                }
+            });
+        }
+
+        function eliminarEvento() {
+            $.ajax({
+                url: "/Evento/EliminarEvento",
+                type: "GET",
+                data: { idEvento: $('#IdEvento').val() },
+                contentType: "text",
+                async: false,
+                success: function (data, textStatus, xhr) {
+                    if (textStatus == "success") {
+                        console.log("Call Ajax GET | " + data.toString());
+                        alert("Evento eliminado correctamente.");
+                        window.location.href = "/Evento/MiPerfil";
+                    } else {
+                        console.log("Ha ocurrido un error al realizar la peticion.");
+                    }
+
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    var data = jqXHR.responseJSON;
+                    console.log("Internal system error");
+                }
+            });
+        }
+
+        function salirEvento() {
+
+        }
+
+        function iniciarMapaPerfil() {
+            var latitudOrigen = $('#latitudOrigen').val();
+            if (latitudOrigen != "") {
+                var longitudOrigen = $('#longitudOrigen').val();
+                var latitudDestino = $('#latitudDestino').val();
+                var longitudDestino = $('#longitudDestino').val();
+                var id = 'map';
+                var directionsService = new google.maps.DirectionsService;
+                var directionsDisplay = new google.maps.DirectionsRenderer;
+                var map = new google.maps.Map(document.getElementById(id), {
+                    zoom: 7,
+                    center: { lat: 41.85, lng: -87.65 }
+                });
+                directionsDisplay.setMap(map)
+                directionsService.route({
+                    origin: new google.maps.LatLng(latitudOrigen, longitudOrigen),
+                    destination: new google.maps.LatLng(latitudDestino, longitudDestino),
+                    waypoints: null,
+                    optimizeWaypoints: true,
+                    travelMode: 'WALKING'
+                }, function (response, status) {
+                    if (status === 'OK') {
+                        console.log("OKKKKK");
+                        directionsDisplay.setDirections(response);
+                    } else {
+                        window.alert('Ha ocurrido un error ' + status);
+                    }
+                });
+            }
+
+
+        }
+
+
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBh47fOB-NbSxsknAB7aN3-DECXnCkyUIc&callback=iniciarMapaPerfil">
+    </script>
+
+
+}
+else
+{
+    <script>
+        window.location.href = "/Account/Login";
+    </script>
+
+
+
+}

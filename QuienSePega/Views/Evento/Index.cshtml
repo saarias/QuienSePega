@@ -1,0 +1,328 @@
+﻿@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "Eventos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (Request.IsAuthenticated)
+{
+    <div class="container">
+        <div class="row pull-right">
+            <button id="btnCrearEvento" type="button" class="btn btn-default pull-right" style="margin-right:10px">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                Crear Evento
+            </button>
+            <button id="btnVerEvento" type="button" class="btn btn-default pull-right" style="margin-right:10px">
+                <i class="fa fa-map-marker" aria-hidden="true"></i>
+                Ver Eventos
+            </button>
+            <button id="btnMiPerfil" type="button" class="btn btn-default pull-right">
+                <i class="fa fa-bars" aria-hidden="true"></i>
+                Mi Perfil
+            </button>
+        </div>
+        <div class="crearEvento">
+            <h3 class="text-white">Crear Evento</h3>
+            <div class="row" style="padding-left:15px">
+                <div class="form-group " style="margin-right:10px">
+                    <label class="text-white" for="exampleFormControlSelect1">Origen</label>
+                    <select id="selectLugarOrigen" class="form-control" id="exampleFormControlSelect1">
+                        <option value="">-- Seleccione --</option>
+                        @foreach (var lugarOrigen in ViewBag.LugaresOrigen)
+                        {
+                            <option value="@lugarOrigen.Latitud,@lugarOrigen.Longitud">@lugarOrigen.Nombre</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="text-white" for="exampleFormControlSelect1">Destino</label>
+                    <select id="selectLugarDestino" class="form-control" id="exampleFormControlSelect1">
+                        <option value="">-- Seleccione --</option>
+                        @foreach (var lugarDestino in ViewBag.LugaresDestino)
+                        {
+                            <option value="@lugarDestino.Latitud,@lugarDestino.Longitud">@lugarDestino.Nombre</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group" style="margin-top:32px; margin-left:10px;">
+                    @if(ViewBag.PuedePegarse == true) {
+                    <button onclick="confirmarEvento();" disabled="true" id="btnConfirmarEvento" type="button" class="btn btn-primary ">
+
+                        Confirmar Evento
+                    </button>
+                    }
+                    else
+                    {
+                        <button onclick="return false" disabled="true" id="btnConfirmarEventoFalse" type="button" class="btn btn-primary ">
+                           Ya estas en un evento :/
+                        </button>
+                    }
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-7" id="map"></div>
+                <div id="inputHoraInicio" class="form-group col-md-2" style="margin-left:10px">
+                    <label class="text-white" for="horaInicio">Hora Inicio</label>
+                    <input type="time" class="form-control" id="horaInicio" placeholder="Hora Inicio">
+                </div>
+                <div id="inputHoraFin" class="form-group col-md-2" style="margin-left:10px">
+                    <label class="text-white" for="horaFin">Hora Fin</label>
+                    <input type="time" class="form-control" id="horaFin" placeholder="Hora Fin">
+                </div>
+            </div>
+            <div class="row ">
+
+            </div>
+        </div>
+        <!--<div class="verEvento">
+            <h3 class="text-white">Eventos</h3>
+            <br />
+            <div class="row tarjetasEventos">
+                @foreach (var eventos in ViewBag.MostrarEvento)
+                {
+                    <div class="col-xl-3 col-sm-6 mb-3">
+                        <div class="card text-white @eventos.NumeroRandom2 o-hidden h-100">
+                            <div class="card-body">
+                                <div class="card-body-icon">
+                                    <i class="@eventos.NumeroRandom"></i>
+                                </div>
+                                <div class="mr-5">@eventos.NombreEvento</div>
+                            </div>
+                            <a class="card-footer text-white clearfix small z-1 detalles" href="#">
+                                <span id="@eventos.IdEvento" class="float-left ">Ver Detalles</span>
+                                <span class="float-right">
+                                    <i class="fa fa-angle-right"></i>
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>-->
+        <!-- Modal Registro Satisfactorio -->
+        <div id="modal1" class="modal fade bd-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    Registrado Satisfactoriamente.
+                </div>
+            </div>
+        </div>
+        <!-- Modal Detalle Evento-->
+        <!--<div class="modal fade" id="detalleEvento" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Detalles Evento</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-row">
+                            <div class="col">
+                                <label for="destino">Destino:</label>
+                                <input type="text" id="destino" name="destino" placeholder="Destino" class="form-control" disabled />
+                            </div>
+                            <div class="col">
+                                <label for="origen">Origen:</label>
+                                <input type="text" id="origen" name="origen" placeholder="Origen" class="form-control" disabled />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col">
+                                <label for="horaInicio">Hora Inicio:</label>
+                                <input type="text" id="horaInicio2" name="horaInicio" placeholder="Hora Inicio" class="form-control" disabled />
+                            </div>
+                            <div class="col">
+                                <label for="horaFin">Hora Fin:</label>
+                                <input type="text" id="horaFin2" name="horaFin" placeholder="Hora Fin" class="form-control" disabled />
+                            </div>
+                            <div class="col">
+                                <label for="creador">Creador:</label>
+                                <input type="text" id="creador" name="creador" placeholder="Creador" class="form-control" disabled />
+                            </div>
+                        </div>
+                        <br/>
+                        <div class="form-row">
+                            <div class="col" id="map2"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-success"><i class="fa fa-hand-o-right" aria-hidden="true"></i>
+                        Pegarse</button>
+                    </div>
+                </div>
+            </div>
+        </div>-->
+    </div>
+    @Scripts.Render("~/bundles/jquery")
+    <script>
+        function test() {
+            /* var directionsService = new google.maps.DirectionsService;
+             var directionsDisplay = new google.maps.DirectionsRenderer;
+             var map = new google.maps.Map(document.getElementById('map'), {
+                 zoom: 6,
+                 center: { lat: 41.85, lng: -87.65 }
+             });
+             directionsDisplay.setMap(map); */
+        }
+
+        /* MOSTRAR PANELES */
+        $('#modal1').modal('hide');
+        $('#inputHoraInicio').hide();
+        $('#inputHoraFin').hide();
+        $('#btnCrearEvento').click(function () {
+            window.location.href = "/Evento/Index";
+        });
+        $('#btnVerEvento').click(function () {
+            window.location.href = "/Evento/DetallesEvento";
+        });
+        $('#btnMiPerfil').click(function () {
+            window.location.href = "/Evento/MiPerfil";
+        });
+
+        $('.detalles').click(function () {
+            console.log("ID EVENTO -> " + $(this).children()[0].id);
+            obtenerDetalleEvento("/Evento/DetallesEventoById", $(this).children()[0].id);
+            $('#detalleEvento').modal('show'); ``
+        });
+
+        /*MOSTRAR MAPA*/
+        $('#selectLugarOrigen').on('change', function () {
+            verificarMapa();
+        });
+
+        $('#selectLugarDestino').on('change', function () {
+            verificarMapa();
+        })
+
+        function verificarMapa() {
+            var valorOrigen = $("#selectLugarOrigen option:selected").val();
+            var valorDestino = $("#selectLugarDestino option:selected").val();
+            if (valorOrigen != "" && valorDestino != "") {
+                var splitOrigen = valorOrigen.split(",");
+                var latitudOrigen = splitOrigen[0];
+                var longitudOrigen = splitOrigen[1];
+
+                var splitDestino = valorDestino.split(",");
+                var latitudDestino = splitDestino[0];
+                var longitudDestino = splitDestino[1];
+
+                console.log("COORDENADAS ORIGEN: " + latitudOrigen + "   " + longitudOrigen);
+                console.log("COORDENADAS DESTINO: " + latitudDestino + "   " + longitudDestino);
+                $("#btnConfirmarEvento").removeAttr("disabled");
+                $('#inputHoraInicio').show();
+                $('#inputHoraFin').show();
+                iniciarMapa('map', latitudOrigen, longitudOrigen, latitudDestino, longitudDestino);
+            } else {
+
+                $("#btnConfirmarEvento").attr('disabled', true);
+                $('#inputHoraInicio').hide();
+                $('#inputHoraFin').hide();
+            }
+        }
+
+        function iniciarMapa(id, latitudOrigen, longitudOrigen, latitudDestino, longitudDestino) {
+
+            var directionsService = new google.maps.DirectionsService;
+            var directionsDisplay = new google.maps.DirectionsRenderer;
+            var map = new google.maps.Map(document.getElementById(id), {
+                zoom: 7,
+                center: { lat: 41.85, lng: -87.65 }
+            });
+
+            directionsDisplay.setMap(map)
+            directionsService.route({
+                origin: new google.maps.LatLng(latitudOrigen, longitudOrigen),
+                destination: new google.maps.LatLng(latitudDestino, longitudDestino),
+                waypoints: null,
+                optimizeWaypoints: true,
+                travelMode: 'WALKING'
+            }, function (response, status) {
+                if (status === 'OK') {
+                    console.log("OKKKKK");
+                    directionsDisplay.setDirections(response);
+                } else {
+                    window.alert('Ha ocurrido un error ' + status);
+                }
+            });
+
+        }
+
+        function confirmarEvento() {
+            var valorOrigen = $("#selectLugarOrigen option:selected").text();
+            var valorDestino = $("#selectLugarDestino option:selected").text();
+            insertarEvento("/Evento/InsertarEvento", valorOrigen, valorDestino, "saarias");
+
+        }
+
+        function insertarEvento(EndPoint, origen, destino, user) {
+            $.ajax({
+                url: EndPoint,
+                type: "GET",
+                data: { nombreOrigen: origen, nombreDestino: destino, creador: user },
+                contentType: "text",
+                async: false,
+                success: function (data, textStatus, xhr) {
+                    if (textStatus == "success") {
+                        console.log("Call Ajax GET | " + EndPoint + " | " + data.toString());
+                        alert("Registrado satisfactoriamente.");
+                        window.location.href = "/Evento/Index";
+                    } else {
+                        console.log("Ha ocurrido un error al realizar la peticion.");
+                    }
+
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    var data = jqXHR.responseJSON;
+                    console.log("Internal system error");
+                }
+            });
+        }
+
+        function obtenerDetalleEvento(EndPoint, id) {
+            $.ajax({
+                url: EndPoint,
+                type: "GET",
+                data: { idEvento: id },
+                contentType: "text",
+                async: false,
+                success: function (data, textStatus, xhr) {
+                    if (textStatus == "success") {
+                        console.log("Call Ajax GET | " + EndPoint + " | " + data.toString());
+                        console.log(data);
+                        $('#creador').val(data.Creador);
+                        $('#origen').val(data.Origen);
+                        $('#destino').val(data.Destino);
+                        $('#horaInicio2').val(data.HoraInicio);
+                        $('#horaFin2').val(data.HoraFin);
+                        console.log("ORIGEN: " + data.LatitudOrigen + " " + data.LongitudOrigen);
+                        console.log("DESTINO: " + data.LatitudDestino + " " + data.longitudDestino);
+                        iniciarMapa('map2', data.LatitudOrigen, data.LongitudOrigen, data.LatitudDestino, data.LongitudDestino);
+                    } else {
+                        console.log("Ha ocurrido un error al realizar la peticion.");
+                    }
+
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    var data = jqXHR.responseJSON;
+                    console.log("Internal system error");
+                }
+            });
+        }
+
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBh47fOB-NbSxsknAB7aN3-DECXnCkyUIc">
+    </script>
+
+}
+else
+{
+    <script>
+        window.location.href = "/Account/Login";
+    </script>
+
+
+}
+
